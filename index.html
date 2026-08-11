@@ -197,15 +197,15 @@
         });
     }
 
-    // Android向けの自動インストール案内キャッチ
+    // Android向けの自動インストール案内
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        deferredPrompt.prompt(); // 自動でポップアップを表示
+        deferredPrompt.prompt();
     });
 
-    // 1. 端末およびアプリ起動状態の制御
+    // 1. 端末およびアプリ起動状態の判定
     function checkDeviceAndAppMode() {
         const ua = navigator.userAgent.toLowerCase();
         const isMobileOrTablet = /iphone|ipad|ipod|android/.test(ua);
@@ -217,23 +217,25 @@
         const downloadScreen = document.getElementById("app-download-screen");
 
         if (isMobileOrTablet && !isStandalone) {
-            // スマホ/タブレット ＆ ブラウザ閲覧時の場合：ブロック画面を表示
+            // スマホブラウザアクセス時はダウンロード案内画面
             mainArea.style.display = "none";
             downloadScreen.style.display = "block";
         } else {
-            // PC 画面、または アプリとして起動している場合：通常表示
+            // PCまたはPWAアプリ起動時は通常表示
             mainArea.style.display = "block";
             downloadScreen.style.display = "none";
-            loadNewsData(); // ニュースデータ読込実行
+            loadNewsData(); // データ取得開始
         }
     }
 
+    // API & 元リポジトリのベースURL指定
     const newsScriptUrl = "https://script.google.com/macros/s/AKfycbwbUTBxVeTkRlAJ1dnBlgcmpGaWI9B0SeMwkwKSwAJYjRDAtVcX67QwA5FcNGaJE9Cq/exec";
-    const OLD_REPO_URL = "https://shinorail.github.io/main/"; // ★元リポジトリのURL指定
+    const OLD_REPO_URL = "https://shinorail.github.io/main/"; 
 
     const _auth = "cGFzc3dvcmQyMDI2"; 
     const isAuthorized = (p) => btoa(p) === _auth;
 
+    // ユーザー制御 & 管理者用フォーム分岐
     function setupFormAdminControl() {
         const uNameEl = document.getElementById("u-name");
         if (uNameEl) {
@@ -252,7 +254,7 @@
             if (email) {
                 authActionArea.innerHTML = `<button onclick="logoutUser(event)" class="page-login-btn logged-in">🔓 ログアウト (${name || '会員'})</button>`;
             } else {
-                authActionArea.innerHTML = `<a href="login.html" class="page-login-btn">🔒 会員ログインはこちら</a>`;
+                authActionArea.innerHTML = `<a href="${OLD_REPO_URL}login.html" class="page-login-btn">🔒 会員ログインはこちら</a>`;
             }
         }
     }
@@ -264,38 +266,46 @@
         location.reload();
     };
 
+    // お気に入り登録/解除
     function toggleFavorite(event, id, title) {
         event.stopPropagation();
         let favs = JSON.parse(localStorage.getItem("favNews") || "[]");
         const index = favs.findIndex(f => f.id == id);
-        if (index > -1) { favs.splice(index, 1); event.target.classList.remove("active"); } 
-        else { favs.push({id: id, title: title}); event.target.classList.add("active"); }
+        if (index > -1) { 
+            favs.splice(index, 1); 
+            event.target.classList.remove("active"); 
+        } else { 
+            favs.push({id: id, title: title}); 
+            event.target.classList.add("active"); 
+        }
         localStorage.setItem("favNews", JSON.stringify(favs));
     }
 
-    // 元リポジトリと連携させたデータ取得
+    // スプレッドシート + 元リポジトリJSONのデータハイブリッド取得
     async function loadNewsData() {
         try {
-            // 1. スプレッドシートデータ取得
+            // 1. スプレッドシート（過去ログ）取得
             let spreadsheetData = [];
             try {
                 const resSpreadsheet = await fetch(newsScriptUrl + "?sheet=新聞");
                 spreadsheetData = await resSpreadsheet.json();
                 if (!Array.isArray(spreadsheetData)) spreadsheetData = [];
-            } catch(e) { console.error("スプレッドシートのデータ読込失敗:", e); }
+            } catch(e) { console.error("スプレッドシート読込失敗:", e); }
 
-            // 2. 元リポジトリの index.json をクロスドメイン参照
+            // 2. 元リポジトリの JSON 取得
             let localJsonData = [];
             try {
-                const resJson = await fetch(OLD_REPO_URL + "train-news/news-index.json");
+                const resJson = await fetch(OLD_REPO_URL + "train-news/news-index.json?t=" + new Date().getTime());
                 localJsonData = await resJson.json();
                 if (!Array.isArray(localJsonData)) localJsonData = [];
             } catch(e) { console.error("JSON読込失敗:", e); }
 
+            // データ結合
             const allData = spreadsheetData.concat(localJsonData);
 
             document.getElementById('loading').style.display = 'none';
             const list = document.getElementById('news-list');
+            list.innerHTML = "";
             const favs = JSON.parse(localStorage.getItem("favNews") || "[]");
 
             allData.reverse().forEach(item => {
@@ -319,10 +329,11 @@
         }
     }
 
+    // 記事閲覧処理（PDF/HTML切り替え機能対応）
     async function openViewer(item, isLocked) {
         if (isLocked && !localStorage.getItem("userEmail")) { 
             alert("会員限定記事です。閲覧するにはログインしてください。"); 
-            window.location.href = "login.html";
+            window.location.href = OLD_REPO_URL + "login.html";
             return; 
         }
 
@@ -339,8 +350,10 @@
             htmlContent.innerHTML = "<p style='color:#999; padding:20px;'>記事を読み込み中...</p>";
 
             try {
-                // パスが相対パスの場合は元リポジトリのドメインを付与
-                const fullPath = item.htmlPath.startsWith('http') ? item.htmlPath : OLD_REPO_URL + "train-news/" + item.htmlPath;
+                let fullPath = item.htmlPath;
+                if (!fullPath.startsWith('http')) {
+                    fullPath = OLD_REPO_URL + "train-news/" + fullPath.replace(/^\//, '');
+                }
                 const res = await fetch(fullPath);
                 if (!res.ok) throw new Error();
                 const htmlText = await res.text();
@@ -364,8 +377,11 @@
         document.getElementById('html-content').innerHTML = "";
     }
 
-    function toggleComments(show) { document.getElementById('comment-area').classList.toggle('open', show); }
+    function toggleComments(show) { 
+        document.getElementById('comment-area').classList.toggle('open', show); 
+    }
 
+    // コメント取得
     async function loadComments(id) {
         const list = document.getElementById('comment-list');
         list.innerHTML = "<small>読込中...</small>";
@@ -383,6 +399,7 @@
         } catch(e) { list.innerHTML = "<small>読み込み失敗</small>"; }
     }
 
+    // コメント送信処理
     document.getElementById('comment-form').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('comment-submit');
@@ -413,7 +430,7 @@
         }
     };
 
-    // 初期起動制御
+    // 初期化実行
     setupFormAdminControl();
     checkDeviceAndAppMode();
 </script>
