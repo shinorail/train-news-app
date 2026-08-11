@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found - 篠ノ井乗務区</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .error-card {
+            background: #ffffff;
+            border-top: 6px solid #004da0; /* 篠ノ井乗務区カラー */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .error-code {
+            font-size: 4.5rem;
+            font-weight: bold;
+            color: #004da0;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .error-badge {
+            display: inline-block;
+            background: #ffaa00;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        .error-message {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: #004da0;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #003366;
+        }
+
+        .btn-secondary {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .btn-secondary:hover {
+            background-color: #dee2e6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-card">
+    <div class="error-code">404</div>
+    <div class="error-badge">行き先が見つかりません</div>
+    
+    <h1 class="error-title">ページが見つかりませんでした</h1>
+    
+    <p class="error-message">
+        お探しのページは移動または削除されたか、URLが正しくない可能性があります。<br>
+        お手数ですが、トップページより改めてお探しください。
+    </p>
+
+    <div class="btn-group">
+        <a href="https://shinorail.github.io/main/" class="btn btn-primary">🏠 篠ノ井乗務区 トップへ戻る</a>
+        <a href="javascript:history.back();" class="btn btn-secondary">↩ 1つ前の画面に戻る</a>
+    </div>
+</div>
+
+</body>
+</html>
